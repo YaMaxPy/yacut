@@ -1,4 +1,5 @@
 import re
+from http import HTTPStatus
 
 from flask import jsonify, request
 
@@ -13,8 +14,8 @@ from .views import get_from_db, get_unique_short_id
 def get_url(short_id):
     url = get_from_db(short_id).first()
     if url is None:
-        raise InvalidAPIUsage('Указанный id не найден', 404)
-    return jsonify({'url': url.original}), 200
+        raise InvalidAPIUsage('Указанный id не найден', HTTPStatus.NOT_FOUND)
+    return jsonify({'url': url.original}), HTTPStatus.OK
 
 
 @app.route('/api/id/', methods=['POST'])
@@ -32,7 +33,7 @@ def create_id():
             data['custom_id'] = get_unique_short_id()
         elif not re.match(REGEXP, custom_id):
             raise InvalidAPIUsage(
-                'Указано недопустимое имя для короткой ссылки', 400
+                'Указано недопустимое имя для короткой ссылки'
             )
     else:
         data['custom_id'] = get_unique_short_id()
@@ -40,4 +41,4 @@ def create_id():
     url.from_dict(data)
     db.session.add(url)
     db.session.commit()
-    return jsonify(url.to_dict()), 201
+    return jsonify(url.to_dict()), HTTPStatus.CREATED
